@@ -1,38 +1,28 @@
 pipeline {
     agent any
-
+    tools {
+        nodejs 'NodeJS' // Refers to the Node.js installation configured in Global Tool Configuration
+    }
     stages {
-        stage('Check Git Installation') {
+        stage('Checkout') {
             steps {
-                bat '''
-                where git >nul 2>nul
-                if %ERRORLEVEL% NEQ 0 (
-                    echo Git is not installed. Please install Git and retry.
-                    exit /b 1
-                ) else (
-                    echo Git is installed. Version:
-                    git --version
-                )
-                '''
+                git url: 'https://github.com/amrita-de/Task-Manager.git', branch: 'main'
             }
         }
-
-        stage('Checkout Code') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Install Dependencies') {
             steps {
-                bat 'npm install'
+                sh 'npm install'
             }
         }
-
         stage('Run Tests') {
             steps {
-                bat 'npm test -- --coverage --watchAll=false'
+                sh 'npm test -- --reporters=default --reporters=jest-junit'
             }
+        }
+    }
+    post {
+        always {
+            junit 'junit.xml' // Publishes test results in Jenkins
         }
     }
 }
